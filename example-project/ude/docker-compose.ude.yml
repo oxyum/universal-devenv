@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+  ude-application:
+    image: nginx:1.20.2-alpine
+    volumes:
+      - ./ude/ude-application-nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - ./static:/usr/share/nginx/html:ro
+    depends_on:
+      - whoami
+      - echo-server
+    networks:
+      default: ~
+      ude-network:
+        aliases:
+          - ${UDE_APPLICATION_ALIAS:-application-name}
+
+networks:
+  ude-network:
+    name: ${UDE_NETWORK_NAME:-universal-devenv}
+    external: true

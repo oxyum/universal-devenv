@@ -1,0 +1,21 @@
+---
+version: "3.9"
+
+services:
+  ude-router:
+    volumes:
+      - ./mailhog/nginx.conf.template:/etc/nginx/templates/mailhog.conf.template:ro
+
+  mailhog:
+    image: mailhog/mailhog:v1.0.1
+    environment:
+      - MH_HOSTNAME=mailhog.${UDE_BASE_DOMAIN}
+      - MH_API_BIND_ADDR=0.0.0.0:8025
+      - MH_UI_BIND_ADDR=0.0.0.0:8025
+      - MH_SMTP_BIND_ADDR=0.0.0.0:587
+    profiles:
+      - mailhog
+
+networks:
+  default:
+    name: ${UDE_NETWORK_NAME:-universal-devenv}

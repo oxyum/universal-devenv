@@ -1,0 +1,66 @@
+# -*- mode: nginx; -*-
+
+# If we receive Upgrade, set Connection to "upgrade"; otherwise, delete any
+# Connection header that may have been passed to this server
+map $http_upgrade $proxy_connection {
+    default upgrade;
+    '' close;
+}
+
+upstream echo-server{
+    server echo-server:8080;
+}
+
+server {
+    listen 80 default_server;
+
+    location @echo-server {
+        internal;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+
+        proxy_set_header Connection $proxy_connection;
+        proxy_set_header Upgrade $http_upgrade;
+
+        proxy_redirect off;
+
+        proxy_pass http://echo-server;
+    }
+
+    location /whoami/ {
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+
+        proxy_set_header Connection $proxy_connection;
+        proxy_set_header Upgrade $http_upgrade;
+
+        proxy_redirect off;
+
+        proxy_pass http://whoami;
+    }
+
+    location / {
+        # some black magic for WebSockets
+        # can be replaced with ``= /`` location! :)
+        try_files /nonexistent @$http_upgrade;
+    }
+
+    location @websocket {
+        # websocket related stuff
+        internal;
+
+        try_files /nonexistent @echo-server;
+    }
+
+    location @ {
+        # web related stuff
+        internal;
+
+        root /usr/share/nginx/html/;
+
+        index index.html;
+
+        try_files $uri $uri/ @echo-server;
+    }
+}
